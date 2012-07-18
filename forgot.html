@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>
+			Мобильный сервис СМС-рассылок от SMS24X7.RU
+        </title>
+        <link rel="stylesheet" href="jquery.mobile-1.1.1.min.css" />
+        <script src="jquery.min.js">
+        </script>
+        <script src="jquery.mobile-1.1.1.min.js">
+        </script>
+        <script src="sms24x7.js">
+        </script>
+        <script src="cordova-1.9.0.js">
+        </script>
+    </head>
+    <body onload="onLoad()">
+        <!-- Home -->
+        <div data-role="page" id="forgot">
+            <div data-theme="a" data-role="header" data-position="fixed">
+                <a data-role="button" href="login.html" data-transition="slide" data-icon="back" data-iconpos="left" rel="external">
+					Назад
+				</a>
+                <h3>
+                    Забыли пароль?
+                </h3>
+            </div>
+            <div data-role="content" style="padding: 15px">
+                <form id="forgotForm" data-ajax="false">
+                    <div data-role="fieldcontain">
+                        <fieldset data-role="controlgroup">
+                            <label for="email">
+                                E-mail
+                            </label>
+                            <input id="email" name="email" type="email" placeholder="Введите e-mail" />
+                        </fieldset>
+                    </div>
+                    <div data-role="fieldcontain">
+                        <fieldset data-role="controlgroup">
+                            <label for="captcha">
+                                Введите код
+                            </label>
+                            <input id="captcha" name="captcha" type="text" placeholder="Код с картинки ниже" />
+                        </fieldset>
+                    </div>
+                    <div style="text-align: center;">
+						<img id="captchaImg" src="https://api.sms24x7.ru/?method=get_captcha" alt="Код">
+						<a href="javascript:void(0);" id="reloadCaptcha">
+							Обновить
+						</a>
+					</div>
+                    <input type="submit" data-icon="arrow-r" data-iconpos="right" value="Продолжить" />
+                </form>
+            </div>
+        </div>
+        <script>
+		var init = function(){
+			
+			if(init.called){
+				return;
+			}
+			init.called = true;
+			
+			$("#forgotForm").submit( function(e){
+				$(this).sms24x7({
+					data: "&method=retrieve_password&" + $("#forgotForm").serialize(),
+					success: function(data){
+						window.setTimeout(function(){
+							window.location.href = "login.html";
+						}, 3000);
+					}
+				});
+				$("#captcha").val('');
+				$("#captchaImg").attr("src", "https://api.sms24x7.ru/?method=get_captcha&" + Math.random());
+				return false;
+			});
+			$("#reloadCaptcha").bind("vclick",function(){
+				$("#captchaImg").attr("src", "https://api.sms24x7.ru/?method=get_captcha&" + Math.random());
+			});
+
+		}
+		
+		init.called = false;
+		
+		function onLoad() {
+			document.addEventListener("deviceready", init, false);
+		}
+		
+        </script>
+    </body>
+</html>

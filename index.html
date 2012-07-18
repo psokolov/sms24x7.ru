@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>
+			Мобильный сервис СМС-рассылок от SMS24X7.RU
+        </title>
+        <link rel="stylesheet" href="jquery.mobile-1.1.1.min.css" />
+        <script src="jquery.min.js">
+        </script>
+        <script src="jquery.mobile-1.1.1.min.js">
+        </script>
+        <script src="sms24x7.js">
+        </script>
+        <script src="cordova-1.9.0.js">
+        </script>
+    </head>
+    <body onload="onLoad()">
+        <!-- emptyPage -->
+        <div data-role="page" id="emptyPage">
+            <div data-role="content" style="padding: 15px">
+            </div>
+        </div>
+        <!-- createPage -->
+        <div data-role="page" id="createPage">
+            <div data-theme="a" data-role="header" data-position="fixed">
+                <h3>
+                    SMS24X7.RU
+                </h3>
+                <a data-role="button" data-transition="slidedown" data-icon="info" data-iconpos="right" class="ui-btn-right" href="#reportsPage" data-theme="b">
+                    Отчеты
+                </a>
+            </div>
+            <div data-role="content" style="padding: 15px">
+                <form id="createForm" data-ajax="false">
+                    <div data-role="fieldcontain">
+                        <fieldset data-role="controlgroup">
+                            <label for="sender_name">Имя отправителя (11 символов латиницей)
+                            </label>
+                            <input id="sender_name" name="sender_name" placeholder="Имя отправителя" value="" type="text" />
+                        </fieldset>
+                    </div>
+                    <div data-role="fieldcontain">
+                        <fieldset data-role="controlgroup">
+                            <label for="text">Текст сообщения
+                            </label>
+                            <textarea id="text" name="text" placeholder="Текст сообщения"></textarea>
+                            <div style="text-align: center;" id="text_count"></div>
+                        </fieldset>
+                    </div>
+                    <span id="basesFieldset"></span>
+                    <input type="hidden" id="unicode" name="unicode" value="1" />
+                    <input type="submit" data-icon="arrow-r" data-iconpos="right" value="Предпросмотр" />
+                </form>
+            </div>
+            <div data-theme="a" data-role="footer" data-position="fixed">
+                <a data-role="button" data-icon="back" data-iconpos="left" href="#" data-theme="c" class="ui-btn-left">
+                    Выход
+                </a>
+            </div>
+        </div>
+        <!-- previewPage -->
+        <div data-role="page" id="previewPage">
+            <div data-theme="a" data-role="header" data-position="fixed">
+                <a data-role="button" data-direction="reverse"  data-transition="slide" data-rel="back" data-icon="back" data-iconpos="right" href="#createPage" data-theme="c">
+                    Редактировать
+                </a>
+                <h3></h3>
+                <a data-role="button" data-icon="delete" data-iconpos="right" data-theme="e" id="deleteDispatch" >
+                    Удалить
+                </a>
+            </div>
+            <div data-role="content" style="padding: 15px">
+            		<ul data-role="listview" data-theme="d" data-divider-theme="d">
+						<li data-role="list-divider" id="p_date"></li>
+						<li>
+							<h3 id="p_text"></h3>
+							<p class="ui-li-aside" id="p_sender_name"></p>
+						</li>
+					</ul>
+					<ul data-role="listview" data-inset="true">
+						<li data-role="list-divider" role="heading">
+							Стоимость
+						</li>
+						<li>Итого получателей: <span class="ui-li-count" id="p_phones_good"></span></li>
+						<li>Кол-во СМС в сообщении: <span class="ui-li-count" id="p_sms"></span></li>
+						<li>Стоимость рассылки: <span class="ui-li-count" id="p_cost"></span></li>
+						<li>У Вас на балансе: <span class="ui-li-count" id="p_balance"></span></li>
+						<li data-role="collapsible-set">
+							<div data-role="collapsible" data-collapsed="true">
+								<h3>
+									Тестовая СМС
+								</h3>
+								<form id="testForm">
+									<div data-role="fieldcontain" data-ajax="false">
+										<fieldset data-role="controlgroup" data-mini="true">
+											<label for="phones">
+											</label>
+											<input id="phones" name="phones" placeholder="Введите номер c +7" value="" type="text">
+										</fieldset>
+									</div>
+									<input type="submit" value="Тестировать" data-mini="true">
+								</form>
+							</div>
+						</li>
+					</ul>
+					<input type="submit" data-icon="arrow-r" data-iconpos="right" value="Запустить" data-theme="a" id="startDispatch" />
+            </div>
+            <div data-theme="a" data-role="footer" data-position="fixed">
+                <a data-role="button" data-icon="back" data-iconpos="left" href="#" data-theme="c" class="ui-btn-left">
+                    Выход
+                </a>
+            </div>
+        </div>
+        <!-- reportsPage -->
+        <div data-role="page" id="reportsPage">
+            <div data-theme="a" data-role="header" data-position="fixed">
+                <a data-role="button" data-transition="fade" data-icon="plus" data-iconpos="right" href="#createPage" data-theme="b">
+                    Создать рассылку
+                </a>
+                <h3></h3>
+                <a data-role="button" data-icon="refresh" data-iconpos="right" data-theme="e" id="refreshHistory" >
+                    Обновить
+                </a>
+            </div>
+            <div data-role="content" style="padding: 15px" id="dispacthesHistory">
+            </div>
+            <div data-theme="a" data-role="footer" data-position="fixed">
+                <a data-role="button" data-icon="back" data-iconpos="left" href="#" data-theme="c" class="ui-btn-left">
+                    Выход
+                </a>
+            </div>
+        </div>
+        <script>
+		var init = function(){
+			
+			if(init.called){
+				return;
+			}
+			init.called = true;
+			
+			// вход
+			if(typeof $('body').data("user") == 'undefined'){
+				$(this).sms24x7({
+					data: "&method=get_profile",
+					success: function(data){
+						$('body').data("user", data);
+						$("#sender_name").val(data.sender_name);
+						$.mobile.changePage("#createPage", { transition: "flip"});
+					}
+				});
+			}
+			// выход
+			var logout = function(){
+				$(this).sms24x7({
+					data: "&method=logout",
+					success: function(data){
+						window.setTimeout(function(){
+							window.location.href = "login.html";
+						}, 1000);
+					}
+				}, false, 'Жалко с Вами расставаться, действительно выходите?');
+			}
+			// etc
+			var refreshHistory = function(pageNeeded){
+				$(this).sms24x7({
+					data: "&method=get_dispatches&page=" + pageNeeded + "&rows=3&state[]=PROCESSING&state[]=PROCESSED&state[]=DELIVERING&state[]=CLOSED&state[]=BLOCKED&state[]=PREVIEW&state[]=PRECREATED&state[]=CREATED",
+					success: function(data, total_data_elements){
+						if(data.length > 0){
+							var d,
+							page = $('#historyPages').find(':checked').val() || 1,
+							pages = Math.ceil(total_data_elements/3),
+							checked_page;
+							if(data.length){
+								var str_bases = '<ul id="dispatchesList" data-role="listview" data-theme="d" data-divider-theme="d" data-split-icon="delete" data-split-theme="a">';
+								for(var i in data){
+									d = data[i];
+									str_bases += '<li data-role="list-divider">' + d.date + '<span class="ui-li-count" id="dispatch' + d.id + '"></span></li><li><h3 style="white-space: normal;">' + d.text + '</h3><p class="ui-li-aside">' + d.sender_name + '</p></li>';
+									if(d.state == 'CREATED' || d.state == 'PREVIEW' || d.state == 'PRECREATED'){
+										str_bases += '<li actions data-theme="e"><a d_id="' + d.id + '" href="#" data-icon="forward" data-iconpos="right">Запустить</a>';
+										str_bases += '<a  d_id="' + d.id + '" href="#">Удалить</a></li>';
+									}
+								}
+								str_bases += '</ul>';
+								var str_pages = '<fieldset id="historyPages" data-role="controlgroup" data-type="horizontal"><legend><br></legend>';
+								for(var i = 1; i <= pages; i++){
+									if(page == i){checked_page = 'checked="checked"'; }else{checked_page = '';}
+									str_pages += '<input type="radio" name="radio-choice-pages" id="radio-choice-' + i + '" value="' + i + '" ' + checked_page + ' /><label for="radio-choice-' + i + '">' + i + '</label>';
+								}
+								str_pages += '</fieldset>';
+							}else{
+								var str_bases = '<h3>У Вас нет проведенных рассылок.</h3>',
+								str_pages = '';
+							}							
+							$("#dispacthesHistory").html(str_bases + str_pages ).trigger('create');
+							// удаление и запуск
+							var actionLi = $("li[actions]");
+							actionLi.find('a:nth-child(1)').on("vclick", function(){
+								$(this).sms24x7({
+									data: "&method=update_dispatch&state=CREATED&id=" + $(this).attr('d_id'),
+									success: function(data){
+										window.setTimeout(function(){
+											$("#refreshHistory").trigger("vclick");
+										}, 1000);
+									}
+								}, false, 'Запустить рассылку?');
+							});
+							actionLi.find('a:nth-child(2)').on("vclick", function(){
+								$(this).sms24x7({
+									data: "&method=delete_dispatch&id=" + $(this).attr('d_id'),
+									success: function(data){
+										window.setTimeout(function(){
+											$("#refreshHistory").trigger("vclick");
+										}, 1000);
+									}
+								}, false, 'Удалить рассылку?');
+							 });
+							// статистики
+							$.each(data, function (index, d) {
+								$(this).sms24x7({
+									data: "&method=get_stats&total=1&dispatch_id=" + d.id,
+									success: function (data){
+										$("#dispatch" + d.id).html('дост. ' + data.delivered + ' из ' + d.sms_num);
+									}
+								}, true);
+							});
+							// страницы
+							$("[name='radio-choice-pages']").on("change", function(){
+								refreshHistory($(this).val());
+							});
+						}else{
+							$("#dispacthesHistory").html('<h3>У Вас нет проведенных рассылок</h3>');
+						}
+					}
+				}, false);
+			};
+        	$("#reportsPage").on("pageinit",function(){
+				refreshHistory(1);
+				$("#refreshHistory").on("vclick",function(){ refreshHistory($("#historyPages").find(":checked").val());} );
+				$("[data-role='footer'] > a","#reportsPage").on("vclick", logout);
+        	});
+			$("#previewPage").on("pageinit",function(){
+				if($('body').data("new_dispatch_id") > 0){
+					$(this).sms24x7({
+						data: "&method=get_dispatch_preview&id=" + $('body').data("new_dispatch_id"),
+						success: function(data){
+							var d = data.dispatch;
+							var stat = data.phones;
+							var msg = data.msg;
+							$("#p_sender_name").html(d.sender_name);
+							$("#p_date").html(d.date);
+							$("#p_text").html(d.text);
+							$("#p_phones_good").html(stat.unlimited);
+							if(stat.addressbook.all != stat.unlimited){$("#p_phones_good").append(' из ' + stat.addressbook.all);}
+							$("#p_length").html(msg['length']);
+							$("#p_sms").html(msg.sms);
+							$("#p_cost").html(msg.sms*stat.unlimited);
+							var user = $('body').data("user");
+							$("#p_balance").html(user.credits + ' ' + user.credits_name);
+						}
+					}, true);
+					$("#testForm").submit( function(){
+						$(this).sms24x7({
+							data: "&method=test_dispatch&action=send&id=" + $('body').data("new_dispatch_id") + '&' + $("#testForm").serialize()
+						});
+						return false;
+					});
+					$("#deleteDispatch").on("vclick",function(){
+						$(this).sms24x7({
+							data: "&method=delete_dispatch&id=" + $('body').data("new_dispatch_id"),
+							success: function(data){
+								window.setTimeout(function(){
+									$.mobile.changePage("#createPage");
+								}, 1000);
+								$('body').data("new_dispatch_id", false);
+							}
+						}, false, 'Удалить эту рассылку?');
+					});
+					$("#startDispatch").on("vclick",function(){
+						$(this).sms24x7({
+							data: "&method=update_dispatch&state=CREATED&id=" + $('body').data("new_dispatch_id"),
+							success: function(data){
+								window.setTimeout(function(){
+									$.mobile.changePage("#reportsPage");
+								}, 1000);
+								$('body').data("new_dispatch_id", false);
+							}
+						}, false, 'Запустить рассылку?');
+					});
+				}else{
+					$.mobile.changePage("#createPage");
+				}
+				$("[data-role='footer'] > a","#previewPage").on("vclick", logout);
+			});
+			$("#createPage").on("pageinit",function(){
+				$("#createForm").submit( function(){
+					if($('body').data("new_dispatch_id") > 0){
+						var edit = "&edit=" + $('body').data("new_dispatch_id") + "&";
+					}else{
+						var edit = '';
+					}
+					$(this).sms24x7({
+						data: "&method=create_dispatch&" + edit + $("#createForm").serialize(),
+						success: function(data){
+							$('body').data("new_dispatch_id", data.id);
+							window.setTimeout(function(){
+								$.mobile.changePage("#previewPage", { transition: "slide"});
+							}, 1000);
+						}
+					});
+					return false;
+				});
+				var count_msg = function(e){
+					var msg = $("#text").val();
+					var sms,limit;
+					if(!/[^\x00-\x7F]/.test(msg)){
+						if(msg.length>160){
+							sms = Math.ceil(msg.length/153);
+							limit = 153*sms;
+						}else{
+							sms = 1;
+							limit = 160;
+						}
+						$("#unicode").val('0');
+					}else{
+						if(msg.length>70){
+							sms = Math.ceil(msg.length/63);
+							limit = 63*sms;
+						}else{
+							sms = 1;
+							limit = 70;
+						}
+						$("#unicode").val('1');
+					}
+					$("#text_count").html(sms + ' сообщение (' + msg.length + '/' + limit + ')');
+				};
+				$(document).on('keyup','#text', count_msg );
+				$("#text").on('blur',count_msg).trigger("blur");
+				if(!$('body').data("new_dispatch_id")){
+					$(this).sms24x7({
+						data: "&method=get_bases",
+						success: function(data){
+							if(data.length > 0){
+								var str_bases = '<div data-role="fieldcontain"><fieldset data-inset="true" data-role="controlgroup" data-type="vertical" data-mini="true"><legend>Выберите базы:</legend>';
+								for(var i in data){
+									var base = data[i];
+									str_bases += '<input name="base[]" type="checkbox" value="' + base.id + '" id="base' + base.id + '"/><label for="base' + base.id + '">' + base.name + ' <span id="baseMembers' + base.id + '"></span></label>';
+								}
+								str_bases += '</fieldset></div>';
+								$("#basesFieldset").html(str_bases).trigger('create');
+								$.each(data, function (index, base) {
+									$(this).sms24x7({
+										data: "&method=get_base_info&id=" + base.id,
+										success: function(data){
+											$("#baseMembers" + base.id).html('(' + data.members + ')');
+										}
+									}, true);
+								});
+							}else{
+								$("#basesFieldset").html('<div data-role="fieldcontain"><fieldset data-inset="true" data-role="controlgroup" data-type="vertical" data-mini="true"><legend>Выберите базы:</legend>У Вас нет загруженных баз, загрузка баз доступна в полной версии. Но Вы можете перейти в предпросмотр рассылки и отправить тестовую СМС.</fieldset></div>').trigger('create');
+							}
+						}
+					}, true);
+				}
+				$("[data-role='footer'] > a", "#createPage").on("vclick", logout);
+			});
+		}
+		
+		init.called = false;
+		
+		function onLoad() {
+			document.addEventListener("deviceready", init, false);
+		}
+		
+        </script>
+    </body>
+</html>
